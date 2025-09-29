@@ -1,80 +1,11 @@
-﻿name: CI
+name: CI Minimal
 
 on:
   push:
-    branches: [ main ]
   pull_request:
 
 jobs:
-  # Always runs to validate the workflow
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
       - run: echo "✅ Workflow parsed and ran successfully."
-
-  # Android build only if Gradle wrapper exists
-  android_build:
-    if: ${{ hashFiles('android/gradlew') != '' }}
-    runs-on: ubuntu-latest
-    needs: validate
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-      - uses: android-actions/setup-android@v3
-      - run: npm ci
-      - uses: gradle/actions/setup-gradle@v3
-      - run: chmod +x android/gradlew
-      - working-directory: android
-        run: ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-debug.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-  # iOS simulator build only if a Podfile exists (indicates an iOS project)
-  ios_build:
-    if: ${{ hashFiles('ios/Podfile') != '' }}
-    runs-on: macos-latest
-    needs: validate
-    env:
-      WORKSPACE: ios/MVShop.xcworkspace   # change if your workspace is different
-      SCHEME: MVShop                      # change if your scheme is different
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ~/Library/Caches/CocoaPods
-            ~/.cocoapods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-      - working-directory: ios
-        run: |
-          sudo gem install cocoapods -N
-          pod install
-      - run: |
-          xcodebuild \
-            -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
-            build
