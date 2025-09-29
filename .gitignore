@@ -1,0 +1,8 @@
+﻿node_modules/
+ios/Pods/
+android/build/
+.env
+.env.*
+coverage/
+*.keystore
+*.jks
