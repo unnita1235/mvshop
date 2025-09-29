@@ -1,4 +1,13 @@
-﻿name: CI
+# Go to your project
+cd "D:\Multi-Vendor E-Commerce Mobile App"
+
+# Ensure folders exist
+mkdir .github -ErrorAction SilentlyContinue
+mkdir ".github\workflows" -ErrorAction SilentlyContinue
+
+# Overwrite the workflow file with the updated content
+@'
+name: CI
 
 on:
   push:
@@ -14,17 +23,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - name: Install deps
         run: npm ci
-           # Skip lint/test for now
+      # Skip lint/test for now
       - name: Skip lint
         run: echo "No lint configured yet"
-
       - name: Skip test
         run: echo "No tests configured yet"
-
 
   android_build:
     runs-on: ubuntu-latest
@@ -35,12 +42,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       - name: Install deps
@@ -62,16 +69,16 @@ jobs:
     runs-on: macos-latest
     needs: lint_and_test
     env:
-      WORKSPACE: ios/MVShop.xcworkspace
-      SCHEME: MVShop
+      WORKSPACE: ios/MVShop.xcworkspace   # <-- change if your workspace name differs
+      SCHEME: MVShop                      # <-- change if your scheme name differs
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - name: Install deps
         run: npm ci
       - name: Cache CocoaPods
@@ -96,5 +103,11 @@ jobs:
             -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
             build
+'@ | Set-Content -Encoding UTF8 -LiteralPath ".github\workflows\ci.yml"
+
+# Commit & push
+git add .github\workflows\ci.yml
+git commit -m "ci: skip lint/test for now; keep Android/iOS builds"
+git push
